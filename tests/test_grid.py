@@ -140,3 +140,27 @@ def test_fuzzy_driven_spread():
     after = g.count_cell_type(2)
     assert after >= before, "Critical astrophage should not decrease"
     print(f"PASS: fuzzy-driven spread (critical): {before} -> {after} cells")
+
+
+def test_fuzzy_dormant():
+    from environment.fuzzy_logic import assess_hazard
+    r = assess_hazard(0)
+    assert r["dominant_level"] == "dormant"
+    assert r["spread_chance"] == 0.0
+
+def test_fuzzy_critical():
+    from environment.fuzzy_logic import assess_hazard
+    r = assess_hazard(10)
+    assert r["dominant_level"] == "critical"
+    assert r["spread_chance"] > 0.15
+
+def test_fuzzy_memberships_in_range():
+    from environment.fuzzy_logic import fuzzify
+    for i in [0, 3, 6, 10]:
+        m = fuzzify(i)
+        assert all(0.0 <= v <= 1.0 for v in m.values())
+
+def test_energy_drain_monotonic():
+    from environment.fuzzy_logic import assess_hazard
+    drains = [assess_hazard(i)["energy_drain"] for i in range(0, 11, 2)]
+    assert drains == sorted(drains)
