@@ -48,10 +48,10 @@ def fuzz_critical(intensity: float) -> float:
 
 RULE_OUTPUTS = {
     "dormant":  (0.00, 0),
-    "low":      (0.03, 4),
-    "medium":   (0.07, 9),
-    "high":     (0.14, 16),
-    "critical": (0.25, 25),
+    "low":      (0.01, 4),
+    "medium":   (0.04, 9),
+    "high":     (0.08, 16),
+    "critical": (0.14, 25),
 }
 
 def fuzzify(intensity: float) -> dict:
