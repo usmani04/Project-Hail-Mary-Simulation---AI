@@ -39,6 +39,19 @@ def run_simulation(turns=DEFAULT_TURNS, visualize=True, delay=0.15):
 
         hazard_mgr.step()
 
+<<<<<<< HEAD
+=======
+        active_beetle_positions = {(b.x, b.y) for b in grace.swarm.beetles if b.deployed and not b.transmitted}
+        for row in grid.cells:
+            for cell in row:
+                if cell.cell_type == 9 and (cell.x != grace.x or cell.y != grace.y):
+                    cell.set_type(grace._under_type)
+                if cell.cell_type == 10 and (cell.x != rocky.x or cell.y != rocky.y):
+                    cell.set_type(rocky._under_type)
+                if cell.cell_type == 5 and (cell.x, cell.y) not in active_beetle_positions:
+                    cell.set_type(0)
+
+>>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
         grid.get_cell(grace.x, grace.y).set_type(9)
         grid.get_cell(rocky.x, rocky.y).set_type(10)
 
@@ -59,7 +72,12 @@ def run_simulation(turns=DEFAULT_TURNS, visualize=True, delay=0.15):
             print(
                 f"Turn {turn:3d} | "
                 f"G: HP:{gs['health']:3d} EN:{gs['energy']:5.1f} K:{gs['knowledge']:4.1f}% "
+<<<<<<< HEAD
                 f"S:{gs['samples']} Exp:{gs['experiments']} B:{gs['beetles']} | "
+=======
+                f"S:{gs['samples']} Exp:{gs['experiments']} B:{gs['beetles']} "
+                f"TauS:{gs['taumoeba_samples']} Earth:{gs['earth_fitness']:.2f}({'V' if gs['earth_viable'] else 'X'}) Tx:{gs['swarm_transmitted']}/4 | "
+>>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
                 f"R: HP:{rs['health']:3d} EN:{rs['energy']:5.1f} "
                 f"Erid:{rs['erid_progress']:4.1f}% "
                 f"tunnel:{tunnel_str} shared:{rs['data_shared']}"
@@ -80,6 +98,13 @@ def run_simulation(turns=DEFAULT_TURNS, visualize=True, delay=0.15):
     print(f"Beliefs: {gs['beliefs']}")
     print(f"Erid K: {rocky.erid_knowledge}")
 
+<<<<<<< HEAD
+=======
+    gs = grace.status()
+    for bs in grace.swarm.status():
+        print(f"  Beetle {bs['name']}: transmitted={bs['transmitted']} turns={bs['turns']} path={bs['path_len']} payload={bs['payload']}")
+
+>>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
     if display:
         display.save("simulation_final.png")
         input("\nPress ENTER to close...")
