@@ -30,8 +30,9 @@ class AstrophageManager:
         self.grid = grid
         self._spread_log = []
 
-    def spread(self):
+    def spread(self, taumoeba_deployed=False):
         new_infections = []
+        spread_multiplier = 0.3 if taumoeba_deployed else 1.0
 
         for y in range(self.grid.height):
             for x in range(self.grid.width):
@@ -40,7 +41,7 @@ class AstrophageManager:
                     continue
 
                 hazard = assess_hazard(cell.astrophage_intensity)
-                spread_chance = hazard["spread_chance"]
+                spread_chance = hazard["spread_chance"] * spread_multiplier
                 level         = hazard["dominant_level"]
 
                 for nx, ny in self.grid.get_neighbours(x, y):
@@ -51,8 +52,11 @@ class AstrophageManager:
 
         for (x, y, level) in new_infections:
             cell = self.grid.get_cell(x, y)
-            cell.set_type(CELL_ASTROPHAGE)
-            cell.astrophage_intensity = ASTROPHAGE_INTENSITY_MIN
+            if taumoeba_deployed and cell.has_astrophage():
+                cell.astrophage_intensity = max(1, cell.astrophage_intensity - 1)
+            else:
+                cell.set_type(CELL_ASTROPHAGE)
+                cell.astrophage_intensity = ASTROPHAGE_INTENSITY_MIN
             self._spread_log.append(f"Cell ({x},{y}) infected [{level}]")
 
     def fluctuate_intensity(self):
@@ -82,8 +86,8 @@ class AstrophageManager:
             return 0.0
         return assess_hazard(cell.astrophage_intensity)["energy_drain"]
 
-    def step(self):
-        self.spread()
+    def step(self, taumoeba_deployed=False):
+        self.spread(taumoeba_deployed)
         self.fluctuate_intensity()
 
     def get_spread_log(self, last_n=5):

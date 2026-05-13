@@ -1,10 +1,7 @@
 import random
 from agents.bayesian_knowledge import BayesianKnowledge
-<<<<<<< HEAD
-=======
 from science.genetic_algorithm import run_ga
 from science.beetle_swarm import BeetleSwarm
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
 from config import (
     CELL_EMPTY, CELL_ASTROPHAGE, CELL_PETROVA,
     CELL_ADRIAN, CELL_HAIL_MARY, CELL_BLIP_A, CELL_DEBRIS, CELL_RADIATION,
@@ -16,7 +13,7 @@ GRACE_MAX_ENERGY = 150
 MOVE_COST        = 1
 EXPERIMENT_COST  = 8
 REST_GAIN        = 25
-IDLE_DRAIN_RATE  = 0.3
+IDLE_DRAIN_RATE  = 0.8
 
 
 class Grace:
@@ -44,8 +41,6 @@ class Grace:
         self._target     = None
 
         self.knowledge = BayesianKnowledge()
-<<<<<<< HEAD
-=======
 
         self.taumoeba_samples    = 0
         self.breeding_attempts   = 0
@@ -57,7 +52,6 @@ class Grace:
 
         self.swarm = BeetleSwarm(grid)
 
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
         self._mark_position()
 
     def _mark_position(self):
@@ -76,14 +70,16 @@ class Grace:
             drain = self.hazard_manager.fuzzy_energy_drain(self.x, self.y)
             passive_drain = drain * IDLE_DRAIN_RATE
             self.energy -= passive_drain
-            self.energy = max(0, self.energy)
+            self.energy  = max(0, self.energy)
+            self.health -= max(1, int(intensity * 0.15))
+            self.health  = max(0, self.health)
             if self._under_type == CELL_PETROVA:
                 self.health -= 1
-                self.health = max(0, self.health)
+                self.health  = max(0, self.health)
 
         if self._under_type == CELL_RADIATION:
-            self.health -= 2
-            self.health = max(0, self.health)
+            self.health -= 5
+            self.health  = max(0, self.health)
 
     def _log(self, msg: str):
         self.action_log.append(msg)
@@ -123,15 +119,12 @@ class Grace:
         return True
 
     def _pick_new_target(self):
-<<<<<<< HEAD
-=======
         if self.taumoeba_samples < 3:
             for row in self.grid.cells:
                 for cell in row:
                     if cell.cell_type == CELL_ADRIAN:
                         return (cell.x, cell.y)
 
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
         candidates = []
         for row in self.grid.cells:
             for cell in row:
@@ -167,16 +160,6 @@ class Grace:
         self.move(dx, dy)
 
     def collect_sample(self):
-<<<<<<< HEAD
-        if self._under_type not in (CELL_ASTROPHAGE, CELL_PETROVA, CELL_ADRIAN):
-            self._log("Nothing to collect here")
-            return False
-        self.samples_collected += 1
-        self.knowledge.update("sample_collected")
-        self._log(f"Sample #{self.samples_collected} at ({self.x},{self.y})")
-        return True
-
-=======
         real_type = self._under_type
         if real_type not in (CELL_ASTROPHAGE, CELL_PETROVA, CELL_ADRIAN):
             self._log("Nothing to collect here")
@@ -202,7 +185,6 @@ class Grace:
             return True
         return False
 
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
     def run_experiment(self):
         if self.energy < EXPERIMENT_COST:
             self._log("Not enough energy")
@@ -230,19 +212,6 @@ class Grace:
         self._log(f"Resting — energy {self.energy}")
 
     def deploy_beetle(self):
-<<<<<<< HEAD
-        names = ["John", "Paul", "George", "Ringo"]
-        if self.beetles_deployed >= len(names):
-            return False
-        if self.energy < 15:
-            return False
-        name = names[self.beetles_deployed]
-        self.beetles_deployed += 1
-        self.energy -= 15
-        self._log(f"Beetle {name} deployed")
-        return True
-
-=======
         if self.beetles_deployed >= 4:
             return False
         if self.energy < 15:
@@ -311,7 +280,6 @@ class Grace:
 
         return result
 
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
     def receive_rocky_data(self):
         self.knowledge.update("rocky_shared_data")
         self._log("Rocky shared data")
@@ -337,12 +305,6 @@ class Grace:
             "beetles":     self.beetles_deployed,
             "knowledge":   self.knowledge.knowledge_score(),
             "beliefs":     self.knowledge.summary(),
-<<<<<<< HEAD
-            "on_cell":     self._under_type,
-        }
-
-    def decide_action(self):
-=======
             "on_cell":          self._under_type,
             "taumoeba_samples":  self.taumoeba_samples,
             "breeding_attempts": self.breeding_attempts,
@@ -355,7 +317,6 @@ class Grace:
 
     def decide_action(self):
         self.swarm.step()
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
         self._apply_cell_effects()
 
         if not self.is_alive():
@@ -365,12 +326,6 @@ class Grace:
             self.rest()
             return "rest"
 
-<<<<<<< HEAD
-        on_sample = self._under_type in (CELL_ASTROPHAGE, CELL_PETROVA, CELL_ADRIAN)
-
-        if on_sample and self.samples_collected < 8:
-            self.collect_sample()
-=======
         self._clear_position()
         actual_type = self.grid.get_cell(self.x, self.y).cell_type
         self._mark_position()
@@ -381,7 +336,6 @@ class Grace:
                 self.force_collect_taumoeba()
             else:
                 self.collect_sample()
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
             return "collect"
 
         if self.samples_collected >= 3 and self.energy >= EXPERIMENT_COST:
@@ -389,9 +343,6 @@ class Grace:
                 self.run_experiment()
                 return "experiment"
 
-<<<<<<< HEAD
-        if self.knowledge.knowledge_score() > 50 and self.beetles_deployed < 4:
-=======
         if self.taumoeba_samples >= 2 and self.knowledge.knowledge_score() > 25:
             if not self.earth_viable and random.random() < 0.25:
                 self.breed_taumoeba(target="earth")
@@ -401,7 +352,6 @@ class Grace:
                 return "breed_taumoeba_erid"
 
         if self.knowledge.knowledge_score() > 30 and self.beetles_deployed < 4:
->>>>>>> ea58054867e1113558136a38e37341feaf69fb9b
             if random.random() < 0.1:
                 self.deploy_beetle()
                 return "deploy_beetle"
