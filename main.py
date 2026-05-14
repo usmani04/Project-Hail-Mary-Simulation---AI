@@ -56,6 +56,7 @@ def run_once(run_id, visualize=False, delay=0.15):
             "astrophage_cells": sum(1 for r in grid.cells for c in r if c.has_astrophage()),
             "rocky_shared":     rocky.data_shared,
             "rocky_erid":       rocky.erid_progress,
+            "rocky_hp":         rocky.health,
         })
 
         if visualize:
@@ -147,65 +148,78 @@ def show_graphs(all_results):
         for sp in ax.spines.values():
             sp.set_edgecolor("#1e1e3a")
 
+    def avg_curve(key, default=0):
+        return [
+            sum(r["history"][t].get(key, default) for r in all_results if t < len(r["history"])) /
+            max(1, sum(1 for r in all_results if t < len(r["history"])))
+            for t in range(TURNS)
+        ]
+
+    turns = list(range(1, TURNS + 1))
+
     ax1 = axes[0][0]
     for r in all_results:
-        turns = [h["turn"] for h in r["history"]]
-        ax1.plot(turns, [h["knowledge"] for h in r["history"]],
-                 color="#00e5ff", alpha=0.2, linewidth=0.8)
-    avg_k = [
-        sum(r["history"][t]["knowledge"] for r in all_results if t < len(r["history"])) /
-        max(1, sum(1 for r in all_results if t < len(r["history"])))
-        for t in range(TURNS)
-    ]
-    ax1.plot(range(1, len(avg_k)+1), avg_k, color="#00e5ff", linewidth=2.5, label="Average")
-    ax1.axhline(y=50, color="#ffffff44", linestyle="--", linewidth=0.8)
-    ax1.legend(fontsize=8, labelcolor="white", facecolor=AX)
-    style(ax1, "Knowledge Score — All Runs", "Knowledge %")
+        ax1.plot([h["turn"] for h in r["history"]],
+                 [h["knowledge"] for h in r["history"]],
+                 color="#00e5ff", alpha=0.15, linewidth=0.8)
+    avg_k = avg_curve("knowledge")
+    ax1.plot(turns, avg_k, color="#00e5ff", linewidth=2.5, label="Average")
+    ax1.axhline(y=50, color="#ffffff44", linestyle="--", linewidth=1)
+    ax1.set_ylim(0, 100)
+    ax1.legend(fontsize=9, labelcolor="white", facecolor=AX)
+    style(ax1, "Grace Knowledge Score (all runs)", "Knowledge %")
 
     ax2 = axes[0][1]
-    viable  = sum(1 for r in all_results if r["earth_viable"])
-    alive   = sum(1 for r in all_results if r["grace_alive"])
-    tx4     = sum(1 for r in all_results if r["beetles_tx"] == 4)
-    labels  = ["Earth\nViable", "Grace\nAlive", "4/4\nBeetles"]
-    values  = [viable, alive, tx4]
-    colors  = ["#2e7d32", "#00e5ff", "#f9a825"]
-    bars = ax2.bar(labels, values, color=colors, edgecolor="#0d0d1f", width=0.5)
+    viable = sum(1 for r in all_results if r["earth_viable"])
+    alive  = sum(1 for r in all_results if r["grace_alive"])
+    tx4    = sum(1 for r in all_results if r["beetles_tx"] == 4)
+    bars   = ax2.bar(
+        ["Earth\nSaved", "Grace\nSurvived", "All 4\nBeetles"],
+        [viable, alive, tx4],
+        color=["#2e7d32", "#00e5ff", "#f9a825"],
+        width=0.5, edgecolor="#0d0d1f"
+    )
     ax2.set_ylim(0, n + 2)
-    ax2.axhline(y=n, color="#ffffff33", linestyle="--", linewidth=0.8)
-    for bar, val in zip(bars, values):
-        ax2.text(bar.get_x() + bar.get_width()/2, val + 0.2,
-                 f"{val}/{n}", ha="center", color="white", fontsize=11, fontweight="bold")
-    ax2.set_xlabel("")
-    ax2.set_ylabel("Count", color="#aaaacc", fontsize=8)
+    ax2.axhline(y=n, color="#ffffff33", linestyle="--", linewidth=1)
+    for bar, val in zip(bars, [viable, alive, tx4]):
+        ax2.text(bar.get_x() + bar.get_width()/2, val + 0.3,
+                 f"{val}/{n}", ha="center", color="white", fontsize=12, fontweight="bold")
     ax2.set_facecolor(AX)
-    ax2.set_title("Mission Success Counts", color="white", fontsize=10)
+    ax2.set_title("Mission Success (20 runs)", color="white", fontsize=10)
+    ax2.set_ylabel("Count", color="#aaaacc", fontsize=8)
     ax2.tick_params(colors="#aaaacc", labelsize=8)
-    for sp in ax2.spines.values():
-        sp.set_edgecolor("#1e1e3a")
+    for sp in ax2.spines.values(): sp.set_edgecolor("#1e1e3a")
 
     ax3 = axes[1][0]
-    avg_a = [
-        sum(r["history"][t]["astrophage_cells"] for r in all_results if t < len(r["history"])) /
-        max(1, sum(1 for r in all_results if t < len(r["history"])))
-        for t in range(TURNS)
-    ]
-    ax3.fill_between(range(1, len(avg_a)+1), avg_a, color="#b71c1c", alpha=0.4)
-    ax3.plot(range(1, len(avg_a)+1), avg_a, color="#ff5252", linewidth=2)
-    style(ax3, "Astrophage Spread (Average)", "Cells infected")
+    avg_gh = avg_curve("grace_hp", 100)
+    avg_astr = avg_curve("astrophage_cells", 0)
+    ax3.plot(turns, avg_gh, color="#00e5ff", linewidth=2.5, label="Grace HP")
+    ax3.set_ylim(0, 120)
+    ax3b = ax3.twinx()
+    ax3b.fill_between(turns, avg_astr, color="#b71c1c", alpha=0.3)
+    ax3b.plot(turns, avg_astr, color="#ff5252", linewidth=2, label="Astrophage cells")
+    ax3b.set_ylabel("Astrophage cells", color="#ff5252", fontsize=8)
+    ax3b.tick_params(colors="#ff5252", labelsize=7)
+    ax3b.set_facecolor(AX)
+    ax3.legend(fontsize=9, labelcolor="white", facecolor=AX, loc="upper right")
+    ax3b.legend(fontsize=9, labelcolor="white", facecolor=AX, loc="center right")
+    style(ax3, "Grace HP vs Astrophage Spread", "Grace HP")
 
     ax4 = axes[1][1]
-    kf  = [r["final_knowledge"]  for r in all_results]
-    ef  = [r["earth_fitness"]*100 for r in all_results]
-    tx  = [r["beetles_tx"] * 25  for r in all_results]
-    x   = range(n)
-    w   = 0.25
-    ax4.bar([i-w   for i in x], kf, w, color="#00e5ff", alpha=0.8, label="Knowledge%")
-    ax4.bar([i     for i in x], ef, w, color="#2e7d32", alpha=0.8, label="Earth fit×100")
-    ax4.bar([i+w   for i in x], tx, w, color="#f9a825", alpha=0.8, label="Beetles×25")
-    ax4.set_xticks(list(x))
-    ax4.set_xticklabels([str(r["run_id"]) for r in all_results], fontsize=6)
-    ax4.legend(fontsize=7, labelcolor="white", facecolor=AX)
-    style(ax4, "Per-Run Results", "Score")
+    avg_ef = avg_curve("earth_fitness", 0)
+    avg_tx = avg_curve("beetles_tx", 0)
+    ax4.plot(turns, avg_ef, color="#2e7d32", linewidth=2.5, label="Earth Strain Fitness")
+    ax4.axhline(y=0.7, color="#ffffff44", linestyle="--", linewidth=1, label="Viable threshold")
+    ax4.set_ylim(0, 1.1)
+    ax4b = ax4.twinx()
+    ax4b.plot(turns, avg_tx, color="#f9a825", linewidth=2.5, label="Beetles Transmitted")
+    ax4b.set_ylim(0, 5)
+    ax4b.set_ylabel("Beetles Tx", color="#f9a825", fontsize=8)
+    ax4b.tick_params(colors="#f9a825", labelsize=7)
+    ax4b.set_facecolor(AX)
+    ax4.legend(fontsize=9, labelcolor="white", facecolor=AX, loc="lower right")
+    ax4b.legend(fontsize=9, labelcolor="white", facecolor=AX, loc="upper left")
+    style(ax4, "Earth Strain Fitness & Beetles", "Fitness (0-1)")
 
     plt.tight_layout()
     plt.show()

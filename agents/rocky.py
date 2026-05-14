@@ -279,8 +279,15 @@ class Rocky:
 
     def _apply_passive_drain(self):
         if self._under_type in (CELL_ASTROPHAGE, CELL_PETROVA):
+            cell = self.grid.get_cell(self.x, self.y)
+            intensity = cell.astrophage_intensity if cell.astrophage_intensity else 3
             drain = self.hazard_manager.fuzzy_energy_drain(self.x, self.y) * 0.2
             self.energy = max(0, self.energy - drain)
+            self.health -= max(1, int(intensity * 0.25))
+            self.health  = max(0, self.health)
+        elif not self.tunnel_connected:
+            self.health -= 2
+            self.health  = max(0, self.health)
 
     def is_alive(self):
         return self.health > 0 and self.energy > 0
